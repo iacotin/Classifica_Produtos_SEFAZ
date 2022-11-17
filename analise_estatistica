@@ -1,0 +1,51 @@
+#### FUNCAO OUTLIER MODERADO E EXTREMO ####
+fn_outlier <- function(x){
+  q1 = quantile(x$PROD_VUNCOM ,0.25)
+  q3 = quantile(x$PROD_VUNCOM ,0.75)
+  iq = q3 - q1
+  lim_inf = q1-6*iq
+  lim_sup = q3+6*iq
+  x$OUT_EXTREMO = (x$PROD_VUNCOM > lim_sup | x$PROD_VUNCOM < lim_inf)
+  #
+  q1 = quantile(x$PROD_VUNCOM ,0.25)
+  q3 = quantile(x$PROD_VUNCOM ,0.75)
+  iq = q3 - q1
+  lim_inf = q1-1.5*iq
+  lim_sup = q3+1.5*iq
+  x$OUT_MODERADO = (x$PROD_VUNCOM > lim_sup | x$PROD_VUNCOM < lim_inf)
+  return(x)
+}
+
+
+#### RESMO ESTATISTICO Z-SCORE-MEDIA-MIN-MAX-DESVIO PADRAO
+estat_med_gtin <- tb_med_agrupa_gtin%>%
+  mutate(Z_SCORE = (PROD_VUNCOM-mean(PROD_VUNCOM))/sd(PROD_VUNCOM))%>%
+  mutate(MEDIA_VLR = mean(as.numeric(sprintf("%.5f",PROD_VUNCOM))))%>%
+  mutate(MAX_VLR = max(as.numeric(sprintf("%.5f",PROD_VUNCOM))))%>%
+  mutate(MIN_VALOR = min(as.numeric(sprintf("%.5f",PROD_VUNCOM))))%>%
+  mutate(DESVIO_PADRAO = sd(as.numeric(sprintf("%.5f",PROD_VUNCOM))))
+  #mutate(FREQ = count(PROD_CEAN))%>%
+  select(PROD_CEAN,PROD_XPROD,MEDIA_VLR,MIN_VALOR,MAX_VLR,DESVIO_PADRAO,Z_SCORE)%>%
+  arrange(PROD_CEAN)
+
+
+estat_med_gtin <- estat_med_gtin%>%
+  filter(!grepl('7890000000',PROD_CEAN))
+estat_med_gtin <- estat_med_gtin%>%
+  mutate(MEDIA_VLR = as.numeric(sprintf("%.5f",MEDIA_VLR)))%>%
+  mutate(DESVIO_PADRAO = as.numeric(sprintf("%.5f",DESVIO_PADRAO)))
+
+tb_med_agrupa_gtin <- tb_med_agrupa_gtin%>%
+  filter(!grepl('7890000000',PROD_CEAN))%>%
+  arrange(PROD_CEAN)
+
+tb_freq <- as.data.frame(table(tb_med_agrupa_gtin$PROD_CEAN))
+estat_med_gtin <- inner_join(estat_med_gtin,tb_freq,by=c("PROD_CEAN"="Var1"))
+
+
+
+q1 = quantile(teste_normal$PROD_VUNCOM ,0.25)
+q3 = quantile(teste_normal$PROD_VUNCOM ,0.75)
+iq = q3 - q1
+lim_inf = q1-6*iq
+lim_sup = q3+6*iq
